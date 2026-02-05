@@ -53,11 +53,6 @@ def dashboard():
     return render_template('dashboard.html')
 
 
-@app.route('/logout')
-def logout():
-    session.clear()
-    return redirect('/')
-
 
 # ---------------- Violations Page ----------------
 @app.route('/violations')
