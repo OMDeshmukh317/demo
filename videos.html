@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Teople | Videos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial;
+            background: #eef1f5;
+            padding: 20px;
+        }
+
+        /* ===== Navbar (same as violations.html) ===== */
+        .navbar {
+            background: white;
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin: -20px -20px 20px -20px;
+        }
+
+        .navbar img {
+            height: 42px;
+        }
+
+        .navbar a {
+            text-decoration: none;
+            color: #1f3c88;
+            font-weight: 600;
+            margin-left: 20px;
+        }
+
+        .navbar a.logout {
+            color: #f50000;
+        }
+
+        h2 {
+            color: #1f3c88;
+            margin: 25px 0 10px;
+        }
+
+        /* ===== Video Player Card ===== */
+        .player-card {
+            background: white;
+            border-radius: 10px;
+            padding: 15px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .current-video-title {
+            text-align: center;
+            font-weight: 600;
+            color: #1f3c88;
+            margin-bottom: 10px;
+        }
+
+        video {
+            width: 100%;
+            max-height: 520px;
+            border-radius: 8px;
+            background: black;
+        }
+
+        /* ===== Video List ===== */
+        .video-list {
+            margin-top: 25px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 15px;
+        }
+
+        .video-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+            border-left: 5px solid transparent;
+            transition: 0.25s;
+        }
+
+        .video-item:hover {
+            transform: translateY(-3px);
+            border-left-color: #1f3c88;
+        }
+
+        .video-item.active {
+            border-left-color: #f57c00;
+            background: #fef7f0;
+        }
+
+        .video-name {
+            font-size: 14px;
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 10px;
+            word-break: break-word;
+        }
+
+        .play-button {
+            background: #1f3c88;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        .play-button:hover {
+            background: #16306d;
+        }
+
+        .no-videos {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: #777;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        .video-zoom-container {
+            width: 100%;
+            max-height: 520px;
+            overflow: hidden;
+            background: black;
+            cursor: grab;
+        }
+
+        .video-zoom-container.grabbing {
+            cursor: grabbing;
+        }
+
+        #videoPlayer {
+            width: 100%;
+            transform-origin: center center;
+            user-select: none;
+        }
+
+    </style>
+</head>
+<body>
+
+<!-- ===== Navbar ===== -->
+<div class="navbar">
+    <img src="https://www.teople.co.in/static/media/Teople_Technologies-final.011e39ac7e2ef930af81.webp">
+    <div>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/videos">Videos</a>
+        <a href="/violations">Violations</a>
+        <a href="/logout" class="logout">Logout</a>
+    </div>
+</div>
+
+<h2>Recorded Videos</h2>
+
+<!-- ===== Video Player ===== -->
+<div class="player-card">
+    {% if videos %}
+        <div class="current-video-title" id="currentVideoTitle">
+            Select a video to play
+        </div>
+        <div class="video-zoom-container" id="zoomContainer">
+            <video id="videoPlayer" controls></video>
+        </div>
+    {% else %}
+        <div class="no-videos">No videos available</div>
+    {% endif %}
+</div>
+
+<h2>Available Videos ({{ videos|length }})</h2>
+
+{% if videos %}
+<div class="video-list">
+    {% for video in videos %}
+        <div class="video-item" data-video="{{ video }}">
+            <div class="video-name">{{ video }}</div>
+            <button class="play-button" onclick="playVideo('{{ video }}', this)">
+                ▶ Play
+            </button>
+        </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="no-videos">
+    No videos found in <b>static/Live Feed</b><br>
+    Please add video files to this directory.
+</div>
+{% endif %}
+
+<!-- ===== JS  ===== -->
+<script>
+function playVideo(videoName, button) {
+    console.group("▶ playVideo()");
+    const videoPlayer = document.getElementById('videoPlayer');
+    const title = document.getElementById('currentVideoTitle');
+
+    videoPlayer.pause();
+    const videoPath = `/static/Live Feed/${encodeURIComponent(videoName)}`;
+    videoPlayer.src = videoPath;
+
+    title.textContent = `Now Playing: ${videoName}`;
+
+    document.querySelectorAll('.video-item')
+        .forEach(v => v.classList.remove('active'));
+    button.closest('.video-item').classList.add('active');
+
+    videoPlayer.onloadedmetadata = () => {
+        videoPlayer.play().catch(err => console.error(err));
+    };
+
+    console.groupEnd();
+}
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const container = document.getElementById("zoomContainer");
+    const video = document.getElementById("videoPlayer");
+
+    let scale = 1;
+    let x = 0;
+    let y = 0;
+    let dragging = false;
+    let startX = 0;
+    let startY = 0;
+
+    function applyTransform() {
+        video.style.transform =
+            `translate(${x}px, ${y}px) scale(${scale})`;
+    }
+
+    /* MOUSE WHEEL ZOOM */
+    container.addEventListener("wheel", function (e) {
+        e.preventDefault();
+
+        if (e.deltaY < 0) scale += 0.1;
+        else scale -= 0.1;
+
+        scale = Math.min(Math.max(1, scale), 5);
+
+        if (scale === 1) {
+            x = 0;
+            y = 0;
+        }
+
+        applyTransform();
+    }, { passive: false });
+
+    /* DRAG PAN */
+    container.addEventListener("mousedown", (e) => {
+        if (scale === 1) return;
+
+        dragging = true;
+        container.classList.add("grabbing");
+        startX = e.clientX - x;
+        startY = e.clientY - y;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+        if (!dragging) return;
+        x = e.clientX - startX;
+        y = e.clientY - startY;
+        applyTransform();
+    });
+
+    window.addEventListener("mouseup", () => {
+        dragging = false;
+        container.classList.remove("grabbing");
+    });
+
+    /* DOUBLE CLICK RESET */
+    container.addEventListener("dblclick", () => {
+        scale = 1;
+        x = 0;
+        y = 0;
+        applyTransform();
+    });
+
+});
+</script>
+
+
+</body>
+</html>

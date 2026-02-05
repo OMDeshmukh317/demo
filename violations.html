@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teople | Violations</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial;
+            background: #eef1f5;
+            padding: 20px;
+        }
+
+        .navbar {
+            background: white;
+            padding: 12px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            margin: -20px -20px 20px -20px;
+        }
+
+        .navbar img {
+            height: 42px;
+        }
+
+        .navbar a {
+            text-decoration: none;
+            color: #1f3c88;
+            font-weight: 600;
+            margin-left: 20px;
+        }
+
+        .navbar a.logout {
+            color: #f50000;
+        }
+
+        h2 {
+            color: #1f3c88;
+            margin-top: 30px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+            margin-top: 15px;
+        }
+
+        th {
+            background: #1f3c88;
+            color: white;
+            padding: 10px;
+        }
+
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        img {
+            width: 110px;
+            border-radius: 6px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="navbar">
+    <img src="https://www.teople.co.in/static/media/Teople_Technologies-final.011e39ac7e2ef930af81.webp">
+    <div>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/videos">Videos</a>
+        <a href="/violations">Violations</a>
+        <a href="/logout" class="logout">Logout</a>
+    </div>
+</div>
+
+<h2>ANPR Violations</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Track ID</th>
+        <th>Plate</th>
+        <th>Vehicle</th>
+        <th>Plate</th>
+        <th>Time</th>
+        <th>Camera</th>
+    </tr>
+    {% for row in anpr_events %}
+    <tr>
+        <td>{{ row[0] }}</td>
+        <td>{{ row[1] }}</td>
+        <td>{{ row[2] }}</td>
+        <td><img src="/{{ row[3] }}"></td>
+        <td><img src="/{{ row[4] }}"></td>
+        <td>{{ row[5] }}</td>
+        <td>{{ row[6] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>PPE Violations</h2>
+<table>
+    <tr>
+        <th>ID</th>
+        <th>Track ID</th>
+        <th>Violation</th>
+        <th>Person</th>
+        <th>Time</th>
+        <th>Camera</th>
+    </tr>
+    {% for row in ppe_events %}
+    <tr>
+        <td>{{ row[0] }}</td>
+        <td>{{ row[1] }}</td>
+        <td>{{ row[2] }}</td>
+        <td><img src="/{{ row[3] }}"></td>
+        <td>{{ row[4] }}</td>
+        <td>{{ row[5] }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+</body>
+</html>

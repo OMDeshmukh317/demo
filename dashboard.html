@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Teople | Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: "Segoe UI", Arial, sans-serif;
+            background: #eef1f5;
+        }
+
+        /* NAVBAR */
+        .navbar {
+            background: white;
+            padding: 12px 25px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+
+        .navbar img {
+            height: 42px;
+        }
+
+        .nav-links a {
+            margin-left: 25px;
+            text-decoration: none;
+            color: #1f3c88;
+            font-weight: 600;
+        }
+
+        .nav-links a.logout {
+            color: #f50000;
+        }
+
+        .container {
+            display: flex;
+            padding: 20px;
+            height: calc(100vh - 80px);
+            gap: 20px;
+        }
+
+        .panel {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+
+        .left {
+            width: 30%;
+        }
+
+        .right {
+            width: 70%;
+        }
+
+        h3 {
+            color: #1f3c88;
+            margin-bottom: 10px;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .primary {
+            background: #1f3c88;
+            color: white;
+        }
+
+        .danger {
+            background: #f57c00;
+            color: white;
+        }
+
+        input {
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        /* ===== ZOOM VIEWER ===== */
+        .zoom-container {
+            width: 100%;
+            height: 100%;
+            background: black;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: grab;
+        }
+
+        .zoom-container.grabbing {
+            cursor: grabbing;
+        }
+
+        .zoom-container img,
+        .zoom-container video {
+            max-width: 100%;
+            max-height: 100%;
+            transform-origin: center center;
+            user-select: none;
+        }
+
+        #placeholder {
+            color: #ccc;
+            font-size: 18px;
+        }
+    </style>
+</head>
+
+<body>
+
+<!-- NAVBAR -->
+<div class="navbar">
+    <img src="https://www.teople.co.in/static/media/Teople_Technologies-final.011e39ac7e2ef930af81.webp">
+    <div class="nav-links">
+        <a href="/dashboard">Dashboard</a>
+        <a href="/videos">Videos</a>
+        <a href="/violations">Violations</a>
+        <a href="/logout" class="logout">Logout</a>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- LEFT PANEL -->
+    <div class="panel left">
+        <h3>Live Camera</h3>
+        <button class="primary" onclick="startCamera()">Start Camera</button>
+        <button onclick="pauseStream()">Pause</button>
+        <button onclick="playStream()">Play</button>
+        <button class="danger" onclick="stopCamera()">Stop Camera</button>
+
+        <hr>
+
+        <h3>Upload Image</h3>
+        <form action="/upload_image" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <button class="primary">Process Image</button>
+        </form>
+
+        <hr>
+
+        <h3>Upload Video</h3>
+        <form action="/upload_video" method="post" enctype="multipart/form-data">
+            <input type="file" name="file" required>
+            <button class="primary">Process Video</button>
+        </form>
+    </div>
+
+    <!-- RIGHT PANEL -->
+    <div class="panel right">
+        <div id="zoomContainer" class="zoom-container">
+            <span id="placeholder">Select an input to view output</span>
+            <img id="imageViewer" hidden>
+            <video id="videoPlayer" controls autoplay hidden></video>
+        </div>
+    </div>
+
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+    const container = document.getElementById("zoomContainer");
+    const img = document.getElementById("imageViewer");
+    const video = document.getElementById("videoPlayer");
+    const placeholder = document.getElementById("placeholder");
+
+    let scale = 1, x = 0, y = 0;
+    let dragging = false, startX = 0, startY = 0;
+    let target = null;
+
+    function resetTransform() {
+        scale = 1; x = 0; y = 0;
+        applyTransform();
+    }
+
+    function applyTransform() {
+        if (!target) return;
+        target.style.transform = `translate(${x}px, ${y}px) scale(${scale})`;
+    }
+
+    function setTarget(el) {
+        img.hidden = true;
+        video.hidden = true;
+        placeholder.hidden = true;
+        target = el;
+        el.hidden = false;
+        resetTransform();
+    }
+
+    /* ZOOM */
+    container.addEventListener("wheel", (e) => {
+        if (!target) return;
+        e.preventDefault();
+        scale += e.deltaY < 0 ? 0.1 : -0.1;
+        scale = Math.min(Math.max(1, scale), 5);
+        if (scale === 1) x = y = 0;
+        applyTransform();
+    }, { passive: false });
+
+    /* PAN */
+    container.addEventListener("mousedown", (e) => {
+        if (scale === 1 || !target) return;
+        dragging = true;
+        container.classList.add("grabbing");
+        startX = e.clientX - x;
+        startY = e.clientY - y;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+        if (!dragging) return;
+        x = e.clientX - startX;
+        y = e.clientY - startY;
+        applyTransform();
+    });
+
+    window.addEventListener("mouseup", () => {
+        dragging = false;
+        container.classList.remove("grabbing");
+    });
+
+    container.addEventListener("dblclick", resetTransform);
+
+    /* CAMERA */
+    window.startCamera = () => {
+        setTarget(img);
+        img.src = "/video_feed";
+    };
+
+    window.stopCamera = () => {
+        fetch('/stop');
+        target = null;
+        img.hidden = true;
+        video.hidden = true;
+        placeholder.hidden = false;
+        placeholder.innerText = "Camera stopped";
+    };
+
+    window.pauseStream = () => fetch('/pause');
+    window.playStream = () => fetch('/play');
+
+    /* IMAGE RESULT */
+    {% if image %}
+        setTarget(img);
+        img.src = "{{ url_for('static', filename='uploads/' + image) }}";
+    {% endif %}
+
+    /* VIDEO RESULT */
+    {% if video %}
+        setTarget(video);
+        video.src = "/video_stream/{{ video }}";
+        video.load();
+    {% endif %}
+
+});
+</script>
+
+</body>
+</html>
